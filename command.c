@@ -2,16 +2,14 @@
 
 typedef int (*func_t)(char **argv);
 
-typedef struct
-{
-    const char *name;
-    func_t func;
+typedef struct {
+  const char *name;
+  func_t func;
 } command_t;
 
-static int do_quit(char **argv)
-{
-    shutdownjobs();
-    exit(EXIT_SUCCESS);
+static int do_quit(char **argv) {
+  shutdownjobs();
+  exit(EXIT_SUCCESS);
 }
 
 /*
@@ -19,27 +17,24 @@ static int do_quit(char **argv)
  * 'cd' - change to $HOME
  * 'cd path' - change to provided path
  */
-static int do_chdir(char **argv)
-{
-    char *path = argv[0];
-    if (path == NULL)
-        path = getenv("HOME");
-    int rc = chdir(path);
-    if (rc < 0)
-    {
-        msg("cd: %s: %s\n", strerror(errno), path);
-        return 1;
-    }
-    return 0;
+static int do_chdir(char **argv) {
+  char *path = argv[0];
+  if (path == NULL)
+    path = getenv("HOME");
+  int rc = chdir(path);
+  if (rc < 0) {
+    msg("cd: %s: %s\n", strerror(errno), path);
+    return 1;
+  }
+  return 0;
 }
 
 /*
  * Displays all stopped or running jobs.
  */
-static int do_jobs(char **argv)
-{
-    watchjobs(ALL);
-    return 0;
+static int do_jobs(char **argv) {
+  watchjobs(ALL);
+  return 0;
 }
 
 /*
@@ -47,16 +42,15 @@ static int do_jobs(char **argv)
  * 'fg' choose highest numbered job
  * 'fg n' choose job number n
  */
-static int do_fg(char **argv)
-{
-    int j = argv[0] ? atoi(argv[0]) : -1;
+static int do_fg(char **argv) {
+  int j = argv[0] ? atoi(argv[0]) : -1;
 
-    sigset_t mask;
-    Sigprocmask(SIG_BLOCK, &sigchld_mask, &mask);
-    if (!resumejob(j, FG, &mask))
-        msg("fg: job not found: %s\n", argv[0]);
-    Sigprocmask(SIG_SETMASK, &mask, NULL);
-    return 0;
+  sigset_t mask;
+  Sigprocmask(SIG_BLOCK, &sigchld_mask, &mask);
+  if (!resumejob(j, FG, &mask))
+    msg("fg: job not found: %s\n", argv[0]);
+  Sigprocmask(SIG_SETMASK, &mask, NULL);
+  return 0;
 }
 
 /*
@@ -64,16 +58,15 @@ static int do_fg(char **argv)
  * 'bg' choose highest numbered job
  * 'bg n' choose job number n
  */
-static int do_bg(char **argv)
-{
-    int j = argv[0] ? atoi(argv[0]) : -1;
+static int do_bg(char **argv) {
+  int j = argv[0] ? atoi(argv[0]) : -1;
 
-    sigset_t mask;
-    Sigprocmask(SIG_BLOCK, &sigchld_mask, &mask);
-    if (!resumejob(j, BG, &mask))
-        msg("bg: job not found: %s\n", argv[0]);
-    Sigprocmask(SIG_SETMASK, &mask, NULL);
-    return 0;
+  sigset_t mask;
+  Sigprocmask(SIG_BLOCK, &sigchld_mask, &mask);
+  if (!resumejob(j, BG, &mask))
+    msg("bg: job not found: %s\n", argv[0]);
+  Sigprocmask(SIG_SETMASK, &mask, NULL);
+  return 0;
 }
 
 /*
@@ -81,77 +74,67 @@ static int do_bg(char **argv)
  * 'bg' choose highest numbered job
  * 'bg n' choose job number n
  */
-static int do_kill(char **argv)
-{
-    if (!argv[0])
-        return -1;
-    if (*argv[0] != '%')
-        return -1;
+static int do_kill(char **argv) {
+  if (!argv[0])
+    return -1;
+  if (*argv[0] != '%')
+    return -1;
 
-    int j = atoi(argv[0] + 1);
+  int j = atoi(argv[0] + 1);
 
-    sigset_t mask;
-    Sigprocmask(SIG_BLOCK, &sigchld_mask, &mask);
-    if (!killjob(j))
-        msg("kill: job not found: %s\n", argv[0]);
-    Sigprocmask(SIG_SETMASK, &mask, NULL);
+  sigset_t mask;
+  Sigprocmask(SIG_BLOCK, &sigchld_mask, &mask);
+  if (!killjob(j))
+    msg("kill: job not found: %s\n", argv[0]);
+  Sigprocmask(SIG_SETMASK, &mask, NULL);
 
-    return 0;
+  return 0;
 }
 
-static command_t builtins[] =
-{
-    {"quit", do_quit}, {"cd", do_chdir},  {"jobs", do_jobs}, {"fg", do_fg},
-    {"bg", do_bg},     {"kill", do_kill}, {NULL, NULL},
+static command_t builtins[] = {
+  {"quit", do_quit}, {"cd", do_chdir},  {"jobs", do_jobs}, {"fg", do_fg},
+  {"bg", do_bg},     {"kill", do_kill}, {NULL, NULL},
 };
 
-int builtin_command(char **argv)
-{
-    for (command_t *cmd = builtins; cmd->name; cmd++)
-    {
-        if (strcmp(argv[0], cmd->name))
-            continue;
-        return cmd->func(&argv[1]);
-    }
+int builtin_command(char **argv) {
+  for (command_t *cmd = builtins; cmd->name; cmd++) {
+    if (strcmp(argv[0], cmd->name))
+      continue;
+    return cmd->func(&argv[1]);
+  }
 
-    errno = ENOENT;
-    return -1;
+  errno = ENOENT;
+  return -1;
 }
 
-noreturn void external_command(char **argv)
-{
-    const char *path = getenv("PATH");
+noreturn void external_command(char **argv) {
+  const char *path = getenv("PATH");
 
-    if (!index(argv[0], '/') && path)
-    {
-        /* TODO: For all paths in PATH construct an absolute path and execve it. */
+  if (!index(argv[0], '/') && path) {
+    /* TODO: For all paths in PATH construct an absolute path and execve it. */
 
-        int count = 0;
-        size_t size;
-        char *path_beginning;
+    int count = 0;
+    size_t size;
+    char *path_beginning;
 
-        do
-        {
-            size = strcspn(path + count, ":");
-            path_beginning = strndup(path + count, size);
-            count += size + 1;
+    do {
+      size = strcspn(path + count, ":");
+      path_beginning = strndup(path + count, size);
+      count += size + 1;
 
-            strapp(&path_beginning, "/");
-            strapp(&path_beginning, *argv);
+      strapp(&path_beginning, "/");
+      strapp(&path_beginning, *argv);
 
-            (void)execve(path_beginning, argv, environ);
+      (void)execve(path_beginning, argv, environ);
 
-            free(path_beginning);
+      free(path_beginning);
 
-        }
-        while(size != strlen(path + count));
+    } while (size != strlen(path + count));
 
-    }
-    else
-    {
-        (void)execve(argv[0], argv, environ);
-    }
+  } else {
+    (void)execve(argv[0], argv, environ);
+  }
 
-    msg("%s: %s\n", argv[0], strerror(errno));
-    exit(EXIT_FAILURE);
+  msg("%s: %s\n", argv[0], strerror(errno));
+  exit(EXIT_FAILURE);
 }
